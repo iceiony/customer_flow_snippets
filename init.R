@@ -10,7 +10,7 @@ library('tictoc')
 sources <- lapply(list.files('functions', '[.]R$', full.names = T), source)
 
 elapsed <- function(msg){
-    message(msg)
     toc()
+    message(msg)
     tic()
 }
