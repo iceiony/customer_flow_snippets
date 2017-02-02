@@ -23,7 +23,15 @@ user_view$time_stamp <- NULL
 gc() #clear some memory
 
 elapsed('Sort by day')
-user_view <-  user_view[order(user_view$day_nr),]
+user_view <- user_view[order(user_view$day_nr),]
+
+elapsed('Reshape shop view')
+daily_shop_view <- group_by(user_view, shop_id, day_nr) %>%
+                        summarise(count = n()) %>%
+                        dcast(shop_id ~ day_nr, value.var = 'count')
+
+elapsed('Output shop views')
+write.table(daily_shop_view, './data/daily_shop_view.csv', sep = ',', na = '', row.names = F)
 
 elapsed('Reshape user view')
 daily_view <- group_by(user_view, user_id, day_nr) %>%
