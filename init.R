@@ -14,3 +14,5 @@ elapsed <- function(msg){
     message(msg)
     tic()
 }
+
+start_date <- as.Date('2015-06-25')
