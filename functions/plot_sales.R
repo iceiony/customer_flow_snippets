@@ -1,7 +1,7 @@
-plot_sales  <- function(sales, shop_ids){
-    sales <- filter(sales, shop_id %in% shop_ids) %>%
+plot_series  <- function(series, shop_ids = unique(series$shop_id)){
+    series <- filter(series, shop_id %in% shop_ids) %>%
              melt(id.vars = 'shop_id')
-    fig   <- ggplot(sales, 
+    fig   <- ggplot(series, 
                     aes(x = as.numeric(variable),
                         y = value,
                         colour = as.factor(shop_id))) + 
