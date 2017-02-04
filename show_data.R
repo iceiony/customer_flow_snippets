@@ -28,10 +28,20 @@ plot_heatmap(views[,-1])
 dev.off()
 
 x <- sales[1997,,drop=F]
-x <- (x / mean(x, na.rm = T)) * 8
 y <- views[1997,,drop=F]
-y <- (y / mean(y, na.rm = T)) * 16
+nms <- colnames(x)
+x[is.na(x)] <- median(x,na.rm = T) 
+y[is.na(y)] <- median(y,na.rm = T)
+x <- lowess(seq(length(x)), x, f=1/8)$y
+y <- lowess(seq(length(y)), y, f=1/8)$y
+x <- (x / mean(x, na.rm = T)) * 8
+y <- (y / mean(y, na.rm = T)) * 8.5
+
 dat <- rbind(x,y)
-png('test2.png', width = 2000, height = 2000)
+colnames(dat) <- nms
+plot_series(dat)
+
+png('test.png', width = 2000, height = 2000)
 plot_heatmap(dat[,-1])
 dev.off()
+
