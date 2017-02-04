@@ -26,3 +26,12 @@ views <- as.matrix2(shop_views, ncol(shop_sales), f(log(x)^(1.2)))
 png('figures/shop_views_heat.png', width = 2000, height = 2000)
 plot_heatmap(views[,-1])
 dev.off()
+
+x <- sales[1997,,drop=F]
+x <- (x / mean(x, na.rm = T)) * 8
+y <- views[1997,,drop=F]
+y <- (y / mean(y, na.rm = T)) * 16
+dat <- rbind(x,y)
+png('test2.png', width = 2000, height = 2000)
+plot_heatmap(dat[,-1])
+dev.off()

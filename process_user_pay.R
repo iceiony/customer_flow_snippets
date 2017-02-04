@@ -23,7 +23,7 @@ shop_sales <- group_by(all_sales, shop_id, day_nr) %>%
                  dcast(shop_id ~ day_nr, value.var = 'sales')
 
 elapsed('Output shop sales')
-write.table(shop_sales, './data/shop_sales.csv', sep = ',', na = '', row.names = F)
+write.table(shop_sales, './data/daily_shop_sales.csv', sep = ',', na = '', row.names = F)
 rm(shop_sales)
 gc() #clear some memory
 
@@ -58,6 +58,6 @@ user_buy <- bind_rows(
 
 
 elapsed('Output user purchase')
-write.table(as.matrix(user_buy), './data/user_buy.csv', sep = ',', na = '', row.names = F)
+write.table(as.matrix(user_buy), './data/daily_user_buy.csv', sep = ',', na = '', row.names = F)
 
 elapsed('Finished')

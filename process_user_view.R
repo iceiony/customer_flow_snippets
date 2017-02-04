@@ -38,6 +38,6 @@ daily_view <- group_by(view_data, user_id, day_nr) %>%
                  summarise(count = n())
 
 elapsed('Saving user view count per day') 
-write.table(daily_view, 'data/daily_view.csv', sep = ',' , na = '', row.names = F)
+write.table(daily_view, 'data/daily_user_view.csv', sep = ',' , na = '', row.names = F)
 
 elapsed('Finished')
