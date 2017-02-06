@@ -27,21 +27,24 @@ png('figures/shop_views_heat.png', width = 2000, height = 2000)
 plot_heatmap(views[,-1])
 dev.off()
 
-x <- sales[1997,,drop=F]
-y <- views[1997,,drop=F]
+x <- sales[1984, c(223:494), drop=F]
+y <- views[1984, c(223:494), drop=F]
 nms <- colnames(x)
 x[is.na(x)] <- median(x,na.rm = T) 
 y[is.na(y)] <- median(y,na.rm = T)
-x <- lowess(seq(length(x)), x, f=1/8)$y
-y <- lowess(seq(length(y)), y, f=1/8)$y
-x <- (x / mean(x, na.rm = T)) * 8
-y <- (y / mean(y, na.rm = T)) * 8.5
-
-dat <- rbind(x,y)
-colnames(dat) <- nms
+win <- 50
+x <- rollapply(t(x), win, mean, by.column=F)
+y <- rollapply(t(y), win, mean, by.column=F)
+#x <- lowess(seq(length(x)), x, f=1/3)$y
+#y <- lowess(seq(length(y)), y, f=1/3)$y
+x <- (x / mean(x, na.rm = T)) 
+y <- (y / mean(y, na.rm = T))
+dat <- as.data.frame(rbind(x,y))
+dat$shop_id <- c('sales','views')
 plot_series(dat)
 
 png('test.png', width = 2000, height = 2000)
-plot_heatmap(dat[,-1])
+dat <- rbind(x,y)
+plot_heatmap(dat)
 dev.off()
 
