@@ -7,7 +7,7 @@ shop_info <- read.table('./data/shop_info.txt', sep = ',',
                         header = F, col.names = header_info)
 
 shop_info[is.na(shop_info)] <- 0
-dat <- (data.matrix(shop_info))
+dat <- (data.matrix(shop_info[,-1]))
 
 wss <- rep(Inf,20) 
 for(i in seq_along(wss)){
@@ -17,9 +17,11 @@ for(i in seq_along(wss)){
     }
 }
 
-dev.new()
+
+png('figures/cluster_distances.png')
 plot(seq_along(wss), wss, type = 'b',
      xlab = 'Nr Clusters',
      ylab = 'Distance within groups')
+dev.off()
 
 
