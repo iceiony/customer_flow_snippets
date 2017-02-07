@@ -43,8 +43,8 @@ dat <- as.data.frame(rbind(x,y))
 dat$shop_id <- c('sales','views')
 plot_series(dat)
 
-png('test.png', width = 2000, height = 2000)
-dat <- rbind(x,y)
-plot_heatmap(dat)
-dev.off()
+#png('test.png', width = 2000, height = 2000)
+#dat <- rbind(x,y)
+#plot_heatmap(dat)
+#dev.off()
 
