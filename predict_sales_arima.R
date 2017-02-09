@@ -1,50 +1,46 @@
 source('init.R')
+library('forecast')
 
 shop_sales <- read.table('./data/daily_shop_sales.csv', sep = ',', header = T)
 
-library('forecast')
+frequencies <- c(365, 182.5, 91, 0)
+freq_orders <- c(120, 90, 60, 14)
+
 
 #shop_sales[is.na(shop_sales)] <- 0
-sales <- unlist(shop_sales[1, -1])
-start_day <- first(which(!is.na(sales)))
-end_day   <- length(sales)
-sales[is.na(sales)] <- 0
-plot(sales,,'l')
+forecasts <- mclapply(seq(nrow(shop_sales)),
+               function(idx){
+                    cat(paste0(' ', idx,'\n'));
 
-opt_fit <- list()
-opt_reg <- list()
-idx <- 0
-tic()
-for(freq in c(365))
-{
-    series <- ts(sales[start_day:end_day], frequency = freq)
+                    tic()
+                    sales <- unlist(shop_sales[idx, -1])
+                    start_day <- first(which(!is.na(sales)))
+                    end_day   <- length(sales)
+                    duration <- end_day - start_day
+                    sales[is.na(sales)] <- 0
 
-    cat(sprintf('\nfreq -> %d\n',freq));
-    cat('\tord ->')
-    for(i in seq(freq/3)){
-        idx <- idx + 1
-        cat(paste0(',',i));
-        opt_reg[[idx]] <- fourier(series, K = i)
-        opt_fit[[idx]] <- auto.arima(series, xreg = opt_reg[[idx]],
-                                     #parallel  = TRUE,
-                                     #num.cores = NULL,
-                                     #stepwise  = FALSE,
-                                     seasonal  = FALSE)
-    }
-}
-toc()
+                    braket <- first(which(duration > frequencies))
+                    freq <- frequencies[braket]
+                    ord  <- freq_orders[braket]
 
-errors <- sapply(opt_fit, f(x$aicc))
-plot(errors,,'b')
+                    series  <- ts(sales[start_day:end_day], frequency = freq)
+                    regress <- fourier(series, K = ord)
+                    fit     <- auto.arima(series, xreg = regress, seasonal = FALSE)
+                    fc      <- forecast(fit, xreg = regress)
 
-for( idx in seq_along(opt_fit)){
-    fit <- opt_fit[[idx]]
-    reg <- opt_reg[[idx]]
-    fc  <- forecast(fit, xreg = reg)
-    dev.hold()
-    plot(fc)
-    week_window <- window(fc$mean, end = start(fc$mean) + 14/frequency(fc$mean))
-    lines(week_window, col = 'red',lwd = 1.2)
-    dev.flush()
-    Sys.sleep(0.5)
-}
+                    png(sprintf('./estimates/%d.png', idx), width = 2000, height = 1000)
+                    plot(fc)
+                    week <- window(fc$mean, end = start(fc$mean) + 13/frequency(fc$mean))
+                    lines(week, col = 'red', lwd = 1.2)
+                    dev.off()
+                    toc()
+
+                    return( c(shop_sales$shop_id[idx], fc$mean[1:14]) )
+               }
+             )
+
+forecasts <- do.call(rbind,forecasts)
+colnames(forecasts) <- c('shop_id', sapply(1:14, f(paste0('day_',x))))
+
+write.table(forecasts,'./estimates/predictions.csv', sep=',', 
+            col.names = F, row.names = F)
