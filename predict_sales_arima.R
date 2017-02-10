@@ -3,12 +3,12 @@ library('forecast')
 
 shop_sales <- read.table('./data/daily_shop_sales.csv', sep = ',', header = T)
 
-frequencies <- c(365, 182.5, 91, 0)
-freq_orders <- c(120, 90, 60, 14)
-
+frequencies <- c(365, 182, 91, 14)
+freq_orders <- c(120, 90, 60, 7)
 
 #shop_sales[is.na(shop_sales)] <- 0
-forecasts <- mclapply(seq(nrow(shop_sales)),
+#
+forecasts <- mclapply(seq(nrow(shop_sales)), mc.cores = 8,
                function(idx){
                     cat(paste0(' ', idx,'\n'));
 
