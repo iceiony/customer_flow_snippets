@@ -3,12 +3,12 @@ library('forecast')
 
 shop_sales <- read.table('./data/daily_shop_sales.csv', sep = ',', header = T)
 
-frequencies <- c(365, 182, 91, 14)
-freq_orders <- c(120, 90, 60, 7)
+frequencies <- c(365, 182, 91, 30, 14)
+freq_orders <- c(120, 90, 60, 14, 7)
 
 #shop_sales[is.na(shop_sales)] <- 0
 #
-forecasts <- mclapply(seq(nrow(shop_sales)), mc.cores = 8,
+forecasts <- mclapply(seq(nrow(shop_sales)), mc.cores = 8, mc.preschedule = F,
                function(idx){
                     cat(paste0(' ', idx,'\n'));
 
@@ -35,7 +35,12 @@ forecasts <- mclapply(seq(nrow(shop_sales)), mc.cores = 8,
                     dev.off()
                     toc()
 
-                    return( c(shop_sales$shop_id[idx], fc$mean[1:14]) )
+                    result <- c(shop_sales$shop_id[idx], fc$mean[1:14]) 
+                    write.table(result,
+                                sprintf('./estimates/%d.csv',idx),
+                                sep = ',', col.names = F, row.names = F)
+
+                    return(result)
                }
              )
 
