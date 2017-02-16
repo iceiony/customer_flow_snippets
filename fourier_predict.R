@@ -7,9 +7,7 @@ x <- x[-1]
 y <- 1.2 * sin(3 * x + pi/4) + 0.55 * sin(10 * x) + 2 
 
 trend <- lm(y~x)
-fourier <- fft(trend$residuals)
-duration <- 3
-sample_freq <- y
+fourier <- fft(y)
 
 L <- length(fourier)
 
