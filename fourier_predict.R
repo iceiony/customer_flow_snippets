@@ -1,35 +1,41 @@
 library('purrr')
-timeseries <- function(fourier, duration, sample_freq){
-    i <- complex(real = 0, imaginary = 1) #making sure i is complex
 
-    L <- length(fourier)
-    #moments <- reduce(seq(duration %/% L + 1), .init = 0,
-    #              function(m, p){
-    #                  c(m , seq(last(m), L * p - 1)) 
-    #              })
-    #moments <- moments[seq(2,duration)]
-    #moments <- c(seq(L)-1,seq(L,L*2))
-    moments <- seq(duration) -1
-    message(last(moments))
+period <- 2 * pi
+f0 <- pi / 100
+x <- seq(0, period, pi/100)
+x <- x[-1]
+y <- 1.2 * sin(3 * x + pi/4) + 0.55 * sin(10 * x) + 2 
 
-    base_freq <- sample_freq / L
-    a0 <- Mod(fourier[1]) / L
-    fourier <- fourier[seq(2, L)] / L
-    ampli <- Mod(fourier)
-    phase <- Arg(fourier)
-    freq  <- (seq_along(fourier)) * base_freq
+trend <- lm(y~x)
+plot(x,y,'l')
+abline(trend,col='red')
+dev.new()
+plot(trend$residuals,,'l')
 
-    res <- sapply(moments, function(t){
-       a0 + sum(ampli * cos(freq * 2*pi * t + phase))
-    })
-}
+fourier <- fft(trend$residuals)
+duration <- 3
+sample_freq <- y
 
-x <- seq(0,2*pi ,pi/100)
-y <- 1.2 * sin(3 * x + pi/2) + 0.55 * sin(10 * x) + 2 
-trend <- lm(y ~ x)
+L <- length(fourier)
 
-fourier <- fft(y)
-res <- timeseries(fourier, length(x), 1)
+a0 <- Mod(fourier[1]) / L
+fourier <- fourier[seq(2, L/2)] * 2 / L
+ampli <- unname(Mod(fourier))
+phase <- unname(Arg(fourier) + pi/2)
+freq  <- seq_along(fourier) * (period/f0) / L
 
+imp <- order(-ampli)
+imp <- imp[seq(20)]
+ampli <- ampli[imp]
+phase <- phase[imp]
+freq <- freq[imp]
+
+#freq  <- (seq_along(fourier)) * base_freq
+
+#moments <- c(seq(L)-1,seq(L,L*2))
+
+res <- sapply(seq(L*2) - 1, function(t){
+   a0 + sum(ampli * sin(freq * f0 * t + phase))
+})
 plot(res,,'l',col='red',lwd=3)
-lines(y,,'l')
+lines(trend$residuals,,'l')
