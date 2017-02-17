@@ -11,7 +11,7 @@ TARG <- t(t(y))
 #add noise to the sequence
 noise_idx <- sample(seq_along(y), length(y) * 0.3)
 y[noise_idx] <- 0
-y <- c(y, rep(0,110))
+y <- c(y, rep(0,100))
 #y[200:300]  <- 0
 #y <- y[1:200]
 plot(y,,'l')
