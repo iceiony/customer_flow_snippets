@@ -6,7 +6,7 @@ train_network <- function(IN, TARG, hidden, rate, duration){
     for(epoch in 1:length(errors)){
         net_out <- run_network(IN, w) 
 
-        errors[epoch] <- entropy_cost(TARG, last(net_out))
+        errors[epoch] <- error_cost(last(net_out), TARG)
 
         delta <- determine_delta(TARG, net_out, w)
         w <- update_weights(w, delta, rate)
