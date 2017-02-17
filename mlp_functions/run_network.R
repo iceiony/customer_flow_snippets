@@ -1,13 +1,10 @@
 run_network <- function(net_in, w){
-    net_out <- accumulate(w, .init = cbind(1,net_in), 
-       function(out, w){
-           cbind(1,sigmoid(out %*% w))
-    })
+    net_out <- list(cbind(1, net_in))
+    for(i in seq_len(length(w) - 1)){
+        net_out[[i + 1]] <- cbind(1, sigmoid(last(net_out) %*% w[[i]]))
+    }
 
-    #remove bias from last output
-    last_out <- last(net_out)[,-1]
-    dim(last_out) <- c(nrow(net_in),1)
-    net_out[[length(net_out)]] <- last_out
-
+    i <- length(net_out) 
+    net_out[[i + 1]] <- last(net_out) %*% w[[i]]
     net_out
 }
