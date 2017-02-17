@@ -3,9 +3,11 @@ source('./mlp_functions/init.R')
 
 period <- 2 * pi
 f0 <- pi / 100
-x <- seq(0, 1.5*period, pi/100)
+x <- seq(0, 2.5 * period, pi / 100)
+z <- seq(0, 1.5 * period, 1.5 * period / length(x)) 
+z <- z[2:length(x)]
 x <- x[-1]
-y <- 1.2 * sin(3 * x + pi/4) + 0.55 * sin(10 * x) + 2 
+y <- 1.2 * sin(3 * x + pi/4) + 0.55 * sin(10 * z) + 2 
 
 TARG <- t(t(y))
 #add noise to the sequence
@@ -20,7 +22,6 @@ plot(y,,'l')
 fourier <- fft(y)
 
 L <- length(fourier)
-
 a0 <- Mod(fourier[1]) / L
 fourier <- fourier[seq(2, L/2)] * 2 / L
 ampli <- unname(Mod(fourier))
@@ -53,7 +54,7 @@ IN <- generate_in(length(x) * 2)
 res <- last(run_network(IN,net$w))
 x <- seq(0, length(res) * pi/100, pi/100)
 x <- x[-1]
-y <- 1.2 * sin(3 * x + pi/4) + 0.55 * sin(10 * x) + 2 
+y <- 1.2 * sin(3 * x + pi/4) + 0.55 * sin(10 * z) + 2 
 res <- res
 plot(x,res,'l',col='red',lwd=3)
 lines(x,y)
