@@ -1,4 +1,4 @@
-reconstruct <- function(components, duration){
+reconstruct <- function(components, duration = components$len){
 #reconstructs harmonics for each frequency withouth using amplitudes 
     list2env(components, environment())
     sapply(seq(duration) - 1, 

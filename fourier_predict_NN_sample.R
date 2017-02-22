@@ -24,8 +24,7 @@ for(i in seq(1)){
     y <- c(y, rep(0,100))             #padd to full period
 
     components <- fft_components(y)
-    reconst <- reconstruct(components, length(signal$x))
-
+    reconst <- reconstruct(components)
     IN <- rbind(IN, cbind(reconst, components$a0))
 }
 

@@ -8,8 +8,9 @@ fft_components <- function(series){
     fourier <- fourier[seq(2, L)] / L
 
     list(
-        f0 = f0,
-        a0 = a0,
+        f0  = f0,
+        a0  = a0,
+        len = L,
         ampli = unname(Mod(fourier)),
         phase = unname(Arg(fourier) + pi/2),
         freq  = seq_along(fourier) * f0
