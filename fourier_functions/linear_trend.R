@@ -1,5 +1,5 @@
-linear_trend <- function(signal){
-    x <- c(1,length(signal))
+linear_trend <- function(signal, trim = 0){
+    x <- c(1,length(signal) + trim)
     y <- signal[x]
 
     trend <- lm(y ~ x)
