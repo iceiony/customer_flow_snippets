@@ -5,7 +5,7 @@ learn <- function(signal, trim = 0){
     IN <- phase <-  c()
     for(i in seq(epochs)){
         components <- signal %>% 
-                      add_noise(0.1, 0.1) %>%
+                      add_noise(i, epochs, 0.1, 0.1) %>%
                       fft_components()
        
         phase  <- rbind(phase, components$phase)
@@ -22,7 +22,7 @@ learn <- function(signal, trim = 0){
     net
 }
 
-add_noise <- function(signal, randomed, windowed){
+add_noise <- function(signal,i, epochs, randomed, windowed){
 #poultes the signal with a moving window of zeros and uniformly distributed zeros
     len <- length(signal)
 
