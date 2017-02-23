@@ -1,7 +1,7 @@
 learn <- function(signal, trim = 0){
     signal <- if(trim < 0) head(signal, trim) else c(signal,rep(0, trim))  
 
-    epochs <- 5
+    epochs <- 10
     IN <- phase <-  c()
     for(i in seq(epochs)){
         components <- signal %>% 
