@@ -17,3 +17,9 @@ linear_trend <- function(signal){
 
     trend
 }
+
+
+null_trend <- function(){
+    list(remove = identity,
+         add    = identity)
+}

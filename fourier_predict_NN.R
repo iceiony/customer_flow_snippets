@@ -5,42 +5,33 @@ library('smoother')
 
 shop_sales  <- read.table('./data/daily_shop_sales.csv', sep = ',', header = T)
 
-shop   <- prepare(shop_sales, 16, 7 * 11)
-signal <- shop %>% smth.gaussian(0.1, tails = T) %>% head(-14)
-trend  <- linear_trend(signal)
-signal <- signal %>% trend$remove() %>% normalise()
+predictions <- shop_sales %>% 
+               rowwise()  %>% 
+               lapply(#mc.cores = 8,
+                function(shop){
+#                    shop <- shop_sales[4,]
+                    shop_id <- shop$shop_id
+                    shop    <- prepare(shop, 7 * 9)
+                    signal  <- shop %>% head(-14)
 
-net  <- learn(signal, 14)
-pred <- predict(net, length(signal) + 14)
+                    trend <- signal %>%
+                             smth.gaussian(0.9, tails = T) %>%
+                             make_prediction(trended = F)
 
-attributes(pred) <- attributes(signal)[c('min', 'norm')]
-signal <- denormalise(signal) %>% trend$add()
-pred   <- denormalise(pred)   %>% trend$add()
+                    smoothings <- c(0.5,0.1,0.0)
+                    for(i in smoothings){
+                        pred <- (signal - head(trend, -14)) %>% 
+                                 smth.gaussian(i, tails = T) %>%
+                                 make_prediction(trended = F)
+                        pred <- pred + trend   
 
-plot(shop,,'l',col='red',lwd=3); 
-lines(signal,,lwd=2,col='blue');
-lines(pred,,lwd=2);
-report_error(pred, shop, 14)
+                        plot(shop,,'l',col='red',lwd=3); 
+                        lines(trend,,lwd=2, col='blue');
+                        lines(pred,,lwd=2);
+                        report_error(trend, shop, 14)
+                        report_error(pred, shop, 14)
+                        trend <- pred
+                    }
+               })
 
-#make the overall prediction into a trend 
-trend  <- pred
-signal <- shop %>% head(-14) 
-signal <- (signal - head(trend,-14)) %>% normalise()
-
-net  <- learn(signal, 14)
-pred <- predict(net, length(signal) + 14)
-
-plot(pred,,'l',lwd=2, col='red')
-lines(signal,)
-cor(signal,head(pred,-14))
-
-attributes(pred) <- attributes(signal)[c('min', 'norm')]
-pred   <- denormalise(pred) + trend
-
-
-plot(shop,,'l',col='red',lwd=3); 
-#lines(signal,,lwd=2,col='blue');
-lines(pred,,lwd=2);
-report_error(pred, shop, 14)
-cor(pred,shop)
 
