@@ -1,7 +1,11 @@
-prepare <- function(signal, smoothing = 1){
-    require('smoother')
-    signal <- unlist(signal)
-    signal <- signal[-seq(first(which(!is.na(signal))))]
-    signal[is.na(signal)] <- mean(signal, na.rm = T)
-    smth.gaussian(signal, window = smoothing, tails=T)
+prepare <- function(shop_sales, id , duration){
+#take duration from most recent of data
+    signal <- filter(shop_sales, shop_id == id)
+    signal <- unlist(signal) %>% tail(-1) %>% rev()
+
+    duration <- min(length(signal), duration)
+
+    signal <- signal[seq(duration)] %>% rev()
+    signal[is.na(signal)] <- 0
+    signal
 }

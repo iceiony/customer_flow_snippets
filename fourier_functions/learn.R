@@ -1,5 +1,5 @@
-learn <- function(signal, trim = 0){
-    signal <- if(trim < 0) head(signal, trim) else c(signal,rep(0, trim))  
+learn <- function(signal, pad = 0){
+    signal <- if(pad < 0) head(signal, pad) else c(signal,rep(0, pad))  
 
     epochs <- 10
     IN <- phase <-  c()
