@@ -1,15 +1,15 @@
-learn <- function(signal, pad = 0){
-    signal <- if(pad < 0) head(signal, pad) else c(signal,rep(0, pad))  
-
+learn <- function(signal, pad_size = 0){
     epochs <- 10
     IN <- phase <-  c()
     for(i in seq(epochs)){
         components <- signal %>% 
+                      pad(pad_size) %>%
                       add_noise(i, epochs, 0.1, 0.1) %>%
                       fft_components()
        
-        phase  <- rbind(phase, components$phase)
-        IN     <- rbind(IN, reconstruct(components))
+        phase <- rbind(phase, components$phase)
+        recon <- reconstruct(components, length(signal)) 
+        IN    <- rbind(IN, recon) 
     }
 
     TARG <- rep(signal, epochs) %>% t() %>% t()

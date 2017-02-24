@@ -3,4 +3,5 @@ report_error <- function(out, targ, len = 14){
     targ <- tail(targ, len)
     err  <- error_cost(out, targ)
     message('Prediction error : ', err)
+    invisible(err)
 }

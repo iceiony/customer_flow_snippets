@@ -5,34 +5,29 @@ library('smoother')
 
 shop_sales  <- read.table('./data/daily_shop_sales.csv', sep = ',', header = T)
 
-shop   <- prepare(shop_sales, 11, 7 * 8)
+shop   <- prepare(shop_sales, 16, 7 * 11)
 signal <- shop %>% smth.gaussian(0.1, tails = T) %>% head(-14)
 trend  <- linear_trend(signal)
-plot(signal,,'l');abline(trend)
 signal <- signal %>% trend$remove() %>% normalise()
 
-net  <- learn(signal)
-pred <- predict(net, length(signal) + 14 )%>%
-        #smth.gaussian(window = 0.1, tails = T) %>%
-        identity()
+net  <- learn(signal, 14)
+pred <- predict(net, length(signal) + 14)
 
-attributes(pred) <- attributes(signal)
+attributes(pred) <- attributes(signal)[c('min', 'norm')]
 signal <- denormalise(signal) %>% trend$add()
 pred   <- denormalise(pred)   %>% trend$add()
 
 plot(shop,,'l',col='red',lwd=3); 
 lines(signal,,lwd=2,col='blue');
 lines(pred,,lwd=2);
-report_error(signal, shop, 14)
 report_error(pred, shop, 14)
-cor(pred,shop)
 
 #make the overall prediction into a trend 
 trend  <- pred
 signal <- shop %>% head(-14) 
 signal <- (signal - head(trend,-14)) %>% normalise()
 
-net  <- learn(signal)
+net  <- learn(signal, 14)
 pred <- predict(net, length(signal) + 14)
 
 plot(pred,,'l',lwd=2, col='red')
