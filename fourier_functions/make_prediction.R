@@ -3,7 +3,7 @@ make_prediction <- function(signal, trended = FALSE){
 
     signal <- signal %>% trend$remove() %>% normalise()
 
-    net  <- learn(signal, 0)
+    net  <- learn(signal)
     pred <- predict(net, length(signal) + 14)
 
     attributes(pred) <- attributes(signal)[c('min', 'norm')]

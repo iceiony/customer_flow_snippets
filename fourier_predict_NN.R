@@ -9,7 +9,7 @@ predictions <- shop_sales %>%
                rowwise()  %>% 
                lapply(#mc.cores = 8,
                 function(shop){
-#                    shop <- shop_sales[4,]
+                    shop <- shop_sales[2,]
                     shop_id <- shop$shop_id
                     shop    <- prepare(shop, 7 * 9)
                     signal  <- shop %>% head(-14)

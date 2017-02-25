@@ -10,13 +10,15 @@ prepare <- function(shop_sales, duration, id = shop_sales$shop_id){
         st <- first(which(is.na(signal)))
         nd <- st + first(which(!is.na(signal[-seq(st)])))
         
+        fill_nd <- mean(signal[nd + 0:2])
         if(st == 1) {
-            signal[st:nd] <- signal[nd]
+            signal[st:nd] <- fill_nd
             next
         }
 
         st <- st - 1
-        signal[st:nd] <- seq(signal[st],signal[nd], length.out = nd-st+1)
+        fill_st <- mean(signal[st - 0:2])
+        signal[st:nd] <- seq(fill_st, fill_nd, length.out = nd-st+1)
 
     }
 
