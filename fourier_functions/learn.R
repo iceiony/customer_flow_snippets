@@ -13,7 +13,7 @@ learn <- function(signal, pad_size = 0){
     }
 
     TARG <- rep(signal, epochs) %>% t() %>% t()
-    TARG <- TARG * 1.0
+    TARG <- TARG * 1
     net <- single_layer_train(IN, TARG)
 
     components$phases <- apply(phase, 2, mean)
