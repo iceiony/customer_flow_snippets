@@ -2,16 +2,19 @@ source('./init.R')
 
 mean_cor <- function(correlations){
     apply(correlations, 2, function(x){
-        mean(abs(x))
+        mean(x)
     })
 }
 cluster_cor <- function(cluster){
-    cluster <- as.matrix2(cluster[,-(1:2)])
+    if(nrow(cluster)==1) return(matrix(1))
+
+#    cluster <- as.matrix2(cluster[,-(1:2)])
+    cluster <- cluster[,-seq(ncol(cluster)-7*10)]
     cor(t(cluster), method = 'pearson', use = 'pairwise.complete.obs') 
 }
 
 shop_sales <- read.table('./data/daily_shop_sales.csv', sep = ',', header = T)
-partition  <- read.table('./data/shop_clusters.csv', sep = ',', header = T)
+partition  <- read.table('./data/shop_clusters_180_city.csv', sep = ',', header = T)
 shop_sales <- inner_join(partition, shop_sales, by = 'shop_id')
 
 partition  <- c() 
@@ -42,7 +45,7 @@ for(cls in unique(shop_sales$cluster)){
 partition <- arrange(partition, shop_id)
 all_cor <- arrange(all_cor, shop_id)
 
-plot_series(rbind(all = all_cor$cor, partition = partition$cor))
+#plot_series(rbind(all = all_cor$cor, partition = partition$cor))
 str_format <- '\tmean %0.2f\n\tvar %0.3f\n'
 cat(paste0('Full cor\n',sprintf(str_format, mean(all_cor$cor), var(all_cor$cor))))
 cat(paste0('Part cor\n',sprintf(str_format, mean(partition$cor), var(partition$cor))))

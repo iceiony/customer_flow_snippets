@@ -8,14 +8,28 @@ shop_info <- read.table('./data/shop_info.txt', sep = ',',
                         header = F, col.names = header_info)
 
 shop_info[is.na(shop_info)] <- 0
-dat <- select(shop_info, per_pay, score) 
-dat <- (data.matrix(dat))
+shop_info$shop_level <- as.factor(shop_info$shop_level)
+shop_info$location_id <- as.factor(shop_info$location_id)
+
+dat    <- select(shop_info, per_pay, score) 
+
+columns <- c('shop_level', 'cate_1_name', 'cate_2_name', 'cate_3_name')
+for(name in columns){
+    new_col <- sapply(shop_info[[name]], 
+                 f(x, x == levels(shop_info[[name]]))
+               ) %>% t()
+    colnames(new_col) <- sapply(1:ncol(new_col), f(x, paste0(name,'_',x)))
+    dat <- cbind(dat, new_col)
+}
+
+dat <- scale(data.matrix(dat))
+
 rownames(dat) <- 1:nrow(dat)
 
-wss <- rep(Inf,30) 
+wss <- rep(Inf,250) 
 for(i in seq_along(wss)){
     for( trials in seq(5)){
-        #fit <- pvclust(dat, method.hclust = 'ward.D2', method.dist = 'euclidean', parallel = T) 
+        #fit <- pvclust(t(dat), method.hclust = 'ward.D2', method.dist = 'euclidean', parallel = T) 
         clust <- kmeans(dat, centers = i, iter.max = 200) 
         wss[i] <- min(sum(clust$withinss), wss[i])
     }
@@ -29,10 +43,10 @@ plot(seq_along(wss), wss, type = 'b',
 dev.off()
 
 
-optim_cnt <- 7
+optim_cnt <- 90#70#84
 optim_cls <- NULL
 min_dist    <- Inf
-for(trials in seq(5)){
+for(trials in seq(10)){
     clust <- kmeans(dat,centers = optim_cnt, iter.max = 200)
     dist  <- sum(clust$withinss)
     if(min_dist > dist){
@@ -40,10 +54,8 @@ for(trials in seq(5)){
         optim_cls <- clust
     }
 }
-
 message('Optimal ', optim_cnt, ' cluster size with error ', min_dist)
-dat <- select(shop_info, cate_3_name, shop_level) 
-dat$class <- optim_cls$cluster
+hist(optim_cls$cluster, breaks=optim_cnt)
 
 #library('cluster')
 #png('figures/cluster_by_pca_7_class.png', width = 700, height = 700)
@@ -52,11 +64,9 @@ dat$class <- optim_cls$cluster
 #
 #library('fpc')
 #png('figures/cluster_by_discrim_7_class.png', width = 700, height = 700)
-#dat$cate_3_name <- as.numeric(dat$cate_3_name)
 #plotcluster(dat, optim_cls$cluster, clnum = 1, method = 'dc')
 #dev.off()
 
-dat$cluster <- id(dat)
 shop_clusters <- data.frame(shop_id = shop_info$shop_id,
-                            cluster = dat$cluster)   
-write.table(shop_clusters, 'data/shop_clusters.csv', sep = ',' , row.names = F)
+                            cluster = optim_cls$cluster)   
+write.table(shop_clusters, 'data/shop_clusters_90.csv', sep = ',' , row.names = F)

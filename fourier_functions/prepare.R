@@ -3,7 +3,7 @@ prepare <- function(shop, duration){
     signal <- unlist(shop) %>% tail(-1) 
 
     not_na <- first(which(!is.na(signal)))
-    signal <- signal[-seq(not_na)] %>% rev() 
+    signal <- signal[-seq(not_na-1)] %>% rev() 
     duration <- min(length(signal), duration)
     signal   <- signal[seq(duration)] %>% rev()
 
