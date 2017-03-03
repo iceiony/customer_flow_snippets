@@ -14,8 +14,11 @@ cluster_cor <- function(cluster){
 }
 
 shop_sales <- read.table('./data/daily_shop_sales.csv', sep = ',', header = T)
-partition  <- read.table('./data/shop_clusters_180_city.csv', sep = ',', header = T)
+shop_views <- read.table('./data/daily_shop_view.csv',  sep = ',', header = T)
+partition  <- read.table('./data/shop_clusters_90.csv', sep = ',', header = T)
 shop_sales <- inner_join(partition, shop_sales, by = 'shop_id')
+shop_views <- inner_join(partition, shop_views, by = 'shop_id')
+#shop_sales <- shop_views
 
 partition  <- c() 
 all_cor    <- c()
@@ -42,8 +45,8 @@ for(cls in unique(shop_sales$cluster)){
                     ))
 }
 
-partition <- arrange(partition, shop_id)
-all_cor <- arrange(all_cor, shop_id)
+partition <- arrange(partition, shop_id) %>% na.omit()
+all_cor <- arrange(all_cor, shop_id) %>% na.omit()
 
 #plot_series(rbind(all = all_cor$cor, partition = partition$cor))
 str_format <- '\tmean %0.2f\n\tvar %0.3f\n'
