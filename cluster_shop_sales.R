@@ -12,7 +12,15 @@ fit <- pvclust(dat, method.hclust = 'ward.D2', parallel = T)
 #pvrect(fit)
 #dev.off()
 
-save(fit, file = 'pvclust_corr.Rdata')
+save(fit, file = 'sales_pvclust_corr.Rdata')
 
-classes <- pvpick(fit, alpha = 0.85)
-lapply(classes$clusters, write, './data/pvclust_85.csv', append=T, ncolumns = 2000, sep=',')
+classes  <- pvpick(fit, alpha = 0.95)
+clusters <- lapply(seq_along(classes$clusters), 
+                  function(idx){
+                      shop_id = as.numeric(classes$clusters[[idx]])
+                      data.frame(shop_id, cluster = idx)
+                  }) %>% bind_rows() %>% arrange(shop_id)
+
+nrow(clusters)
+
+write.table(clusters, 'data/sales_pvclust_95.csv', sep=',', row.names = F)
