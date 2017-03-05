@@ -7,13 +7,13 @@ header_info = c('shop_id', 'city_name', 'location_id',
 shop_info <- read.table('./data/shop_info.txt', sep = ',', 
                         header = F, col.names = header_info)
 
-shop_info[is.na(shop_info)] <- 0
 shop_info$shop_level <- as.factor(shop_info$shop_level)
 shop_info$location_id <- as.factor(shop_info$location_id)
 
-dat    <- select(shop_info, per_pay, score) 
+dat <- select(shop_info, per_pay, score) %>% scale()
 
-columns <- c('shop_level', 'cate_1_name', 'cate_2_name', 'cate_3_name')
+columns <- c('shop_level', 'city_name', 'location_id', 
+             'cate_1_name', 'cate_2_name', 'cate_3_name')
 for(name in columns){
     new_col <- sapply(shop_info[[name]], 
                  f(x, x == levels(shop_info[[name]]))
@@ -22,51 +22,22 @@ for(name in columns){
     dat <- cbind(dat, new_col)
 }
 
-dat <- scale(data.matrix(dat))
+dat <- data.matrix(dat) %>% t()
+dat[is.na(dat)] <- 2.5
 
-rownames(dat) <- 1:nrow(dat)
+colnames(dat) <- shop_info$shop_id
 
-wss <- rep(Inf,250) 
-for(i in seq_along(wss)){
-    for( trials in seq(5)){
-        #fit <- pvclust(t(dat), method.hclust = 'ward.D2', method.dist = 'euclidean', parallel = T) 
-        clust <- kmeans(dat, centers = i, iter.max = 200) 
-        wss[i] <- min(sum(clust$withinss), wss[i])
-    }
-}
+fit <- pvclust(dat, method.hclust = 'ward.D2', parallel = T, method.dist = 'euclidean') 
 
+save(fit, file = 'info_pvclust_corr.Rdata')
 
-png('figures/cluster_distances.png')
-plot(seq_along(wss), wss, type = 'b',
-     xlab = 'Nr Clusters',
-     ylab = 'Distance within groups')
-dev.off()
+classes  <- pvpick(fit, alpha = 0.85)
+clusters <- lapply(seq_along(classes$clusters), 
+                  function(idx){
+                      shop_id = as.numeric(classes$clusters[[idx]])
+                      data.frame(shop_id, cluster = idx)
+                  }) %>% bind_rows() %>% arrange(shop_id)
 
+nrow(clusters)
 
-optim_cnt <- 90#70#84
-optim_cls <- NULL
-min_dist    <- Inf
-for(trials in seq(10)){
-    clust <- kmeans(dat,centers = optim_cnt, iter.max = 200)
-    dist  <- sum(clust$withinss)
-    if(min_dist > dist){
-        min_dist <- dist 
-        optim_cls <- clust
-    }
-}
-message('Optimal ', optim_cnt, ' cluster size with error ', min_dist)
-hist(optim_cls$cluster, breaks=optim_cnt)
-
-#library('cluster')
-#png('figures/cluster_by_pca_7_class.png', width = 700, height = 700)
-#clusplot(dat, optim_cls$cluster, color = T, shade = T, lines = 0)
-#dev.off()
-#
-#library('fpc')
-#png('figures/cluster_by_discrim_7_class.png', width = 700, height = 700)
-#plotcluster(dat, optim_cls$cluster, clnum = 1, method = 'dc')
-#dev.off()
-
-shop_clusters <- data.frame(shop_id = shop_info$shop_id,
-                            cluster = optim_cls$cluster)   
-write.table(shop_clusters, 'data/shop_clusters_90.csv', sep = ',' , row.names = F)
+write.table(clusters, 'data/info_pvclust_85.csv', sep = ',', row.names = F)
