@@ -1,9 +1,10 @@
+source('init.R')
+source('./mlp_functions/init.R')
+source('./fourier_functions/init.R')
 library('smoother')
 library('fastICA')
 library('forecast')
 library('MASS')
-source('./mlp_functions/init.R')
-source('./fourier_functions/init.R')
 
 shop_views[is.na(shop_views)] <- 0
 shop_sales[is.na(shop_sales)] <- 0
