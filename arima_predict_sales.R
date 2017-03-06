@@ -4,7 +4,7 @@ library('forecast')
 shop_sales <- read.table('./data/daily_shop_sales.csv', sep = ',', header = T)
 
 frequencies <- c(365, 182, 91, 30, 14)
-freq_orders <- c(120, 90, 60, 14, 7)
+freq_orders <- c(120, 90, 45, 14, 7)
 
 #shop_sales[is.na(shop_sales)] <- 0
 #
