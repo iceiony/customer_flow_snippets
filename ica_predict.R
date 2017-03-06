@@ -22,16 +22,17 @@ prepare <- function(shop_sales, cls, trim = 0, ws = 0.00, sma = 1){
                                if(trim==0) return(x)
                                head(x, -trim)
                             }) %>% t() 
-                group <- group[,-seq(0)]
                 group[is.na(group)] <- 0
                 group
             }
 
-scores  <-  mclapply(sort(unique(shop_sales$cluster)), mc.cores = 7,
+shop_trend  <-  mclapply(sort(unique(shop_sales$cluster)), mc.cores = 6,
             function(cls){
                 message(cls)
-                ws  <- 0.25
+                ws  <- 0.7
                 sma <- 3
+
+                shop_id <- filter(shop_sales, cluster == cls)$shop_id
 
                 train <- prepare(shop_sales, cls, 14, ws, sma)
                 valid <- prepare(shop_sales, cls, 0,  ws, sma)
@@ -62,9 +63,11 @@ scores  <-  mclapply(sort(unique(shop_sales$cluster)), mc.cores = 7,
                                 #plot_series(rbind(x,v))
                                 stats_err(x,v)$err
                           })
-                mean(score)
-            }) %>% unlist()
 
-plot(scores); mean(scores)
+                data.frame(shop_id, X)
+            }) %>% bind_rows()
 
-all_scores <- append(all_scores, mean(scores))
+#plot(scores); mean(scores)
+#all_scores <- append(all_scores, mean(scores))
+shop_trend <- round(shop_trend,2)
+write.table(shop_trend, './data/daily_shop_trend.csv', row.names = F , sep=',')
