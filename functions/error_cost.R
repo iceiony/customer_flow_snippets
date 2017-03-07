@@ -4,5 +4,4 @@ error_cost <- function(out, targ){
     error[is.na(error)] <- 0
     error[error == Inf] <- 0
     sum(error)/length(targ)
-    #sum((out-targ)^2) / 2
 }

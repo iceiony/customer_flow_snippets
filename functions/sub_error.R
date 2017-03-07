@@ -5,5 +5,4 @@ stats_err <- function(out, targ, len = 14){
     er <- error_cost(out, targ)
     co <- cor(out, targ)
 
-    list(err = er, cor = co)
-}
+    list(err = er, cor = co)}
