@@ -1,49 +1,20 @@
-source('init.R')
-source('./mlp_functions/init.R')
-source('./fourier_functions/init.R')
-library('smoother')
-library('fastICA')
-library('forecast')
-library('MASS')
+library('Rmisc')
 
-shop_views[is.na(shop_views)] <- 0
-shop_sales[is.na(shop_sales)] <- 0
+scores <- mclapply(seq(24), mc.cores = 8,
+             function(shop_id){
+                error <- source('mlp_predict.R', local = T)
+                error$value
+             }) %>% bind_rows()
 
-cls = 2
+all_scores <- cbind(all_scores, scores$err)
 
-group  <- (filter(shop_sales, cluster == cls)) %>% 
-            apply(1,function(x) {
-               x[-seq(2)] %>% smth.gaussian(0.02, tails=T) %>% head(-14)
-            }) %>% t() 
-group <- group[,-seq(150)]
+#meanvar.plot(all_scores)
+mn <- apply(all_scores, 2, min) %>% melt()
+mn$Var2 <- seq(nrow(mn))
 
-group2  <- (filter(shop_sales, cluster == cls)) %>% 
-            apply(1,function(x) {
-               x[-seq(2)] %>% smth.gaussian(0.02, tails=T)# %>% head(-14)
-            }) %>% t() 
-group2 <- group2[,-seq(150)]
+su <- summarySE(melt(all_scores), measurevar='value', groupvar=c('Var2'))
+ggplot(su, aes(x = Var2, y = value)) +
+    geom_errorbar(aes(ymin = value - sd, ymax = value + sd)) + 
+    geom_line() + 
+    geom_point(data = mn)
 
-a <- fastICA(t(group), 70)
-S <- apply(a$S, 2, function(s){
-                fit <- auto.arima(s, seasonal = T) 
-                fc  <- forecast(fit, 14)
-                c(s , fc$mean)
-          })
-
-#X <- a$S %*% a$A %>% t() 
-X <- S %*% a$A %>% t()
-X <- apply(X, 1, function(x) {
-               x <- x - min(x)
-          }) %>% t()
-
-#dev.new();plot_series(X)
-
-score <- sapply(seq(nrow(X)),
-            function(idx){
-                x <- X[idx,] %>% tail(14)
-                g <- group2[idx,] %>% tail(14)
-                #plot_series(rbind(x,g))
-                stats_err(x,g)$err
-         })
-score
-score %>% mean()

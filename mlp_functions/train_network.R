@@ -5,11 +5,14 @@ train_network <- function(IN, TARG, hidden, rate, duration){
     w <- init_weights(c(ncol(IN), hidden, ncol(TARG)))
 
     for(epoch in 1:length(errors)){
-        net_out <- run_network(IN, w) 
+        batch <- sample(nrow(IN), 100, replace = T) 
+        #batch <- seq(nrow(IN)) 
 
-        errors[epoch] <- sse_cost(last(net_out), TARG)
+        net_out <- run_network(IN[batch,], w) 
 
-        delta <- determine_delta(TARG, net_out, w)
+        errors[epoch] <- sse_cost(last(net_out), TARG[batch,])
+
+        delta <- determine_delta(TARG[batch,], net_out, w)
         w <- update_weights(w, delta, rate)
 
         rate <- rate * 0.995
