@@ -16,4 +16,5 @@ plot_series <- function(series, shop_ids = unique(series$shop_id)){
              geom_line()
 
     plot(fig)
+    return(fig)
 }

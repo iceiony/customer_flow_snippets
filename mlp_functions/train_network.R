@@ -19,8 +19,9 @@ train_network <- function(views, sales, pre_views, pre_sales, hidden, rate, dura
             sr <- sales[seq(idx_start - pre_sales, idx_start - 1)]
             for(i in seq(idx_start, idx_end)){
                 vr <- views[seq(i - pre_views, i - pre_sales - 1)]
-                IN <- rbind(IN, c(vr, sr))
-                next_day <- run_network(c(vr, sr), w) %>% last()
+                net_in <- c(vr, sr)# %>% jitter( factor = 1)
+                IN <- rbind(IN, net_in)
+                next_day <- run_network(net_in, w) %>% last()
                 sr <- c(sr[-1], next_day)
             }
 

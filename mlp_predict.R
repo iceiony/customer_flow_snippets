@@ -12,18 +12,18 @@ prepare <- function(x, max_len = Inf){
     #x[nas + 1] <- NA
     #x[nas - 1] <- NA
     x <- tail(x, max_len )
-    (normalise(x) * 20) 
+    (normalise(x) * 10) 
 }
 
 mlp_train <- function(views, sales, pre_views, pre_sales){
     v <- prepare(views)
     s <- prepare(sales, length(v))
 
-    hidd <- c(300, 60)
-    rate <- c(5e-1, 1e-3, 1e-3) 
-    len  <- round((length(s) / 100) * 500)  
+    hidd <- c(150, 50)
+    rate <- c(5e-2, 1e-2, 1e-2) 
+    len  <- round((length(s) / 100) * 15)  
     net  <- train_network(v, s, pre_views, pre_sales, hidd, rate, len)
-    net$train_error <- mean(tail(net$errors), 100) 
+    net$train_error <- mean(tail(net$errors), 50) 
     #plot(net$errors, type = 'l', ylim = c(0, 100) , xlim=c(0, 1000))
     #net$train_error
 
@@ -35,7 +35,7 @@ mlp_predict <- function(views, sales, pre_views, pre_sales, net, duration){
     s <- prepare(sales, length(v))
 
     pred <- predict_future(tail(v, pre_views), tail(s, pre_sales), net, duration)
-    pred <- (pred / 20) %>% denormalise(attributes(s))
+    pred <- (pred / 10) %>% denormalise(attributes(s))
     
     return(pred)
 }

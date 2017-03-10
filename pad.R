@@ -4,20 +4,24 @@ source('./mlp_predict.R')
 
 shop_sales <- read.table('./data/daily_shop_sales.csv', sep = ',', header = T)
 shop_views <- read.table('./data/daily_shop_view.csv' , sep = ',', header = T)
-pre_sales <- 20
-pre_views <- pre_sales + 20
+pre_sales <- 14
+pre_views <- pre_sales + 1
+shop_id <- 4
 
-nets <- mclapply(seq(24), mc.cores = 8,
+nets <- mclapply(seq(63), mc.cores = 7,
              function(idx){
-                shop_id <- 3
-                
                 views <- unlist(shop_views[shop_id, -1]) 
                 sales <- unlist(shop_sales[shop_id, -1])
 
-                chop <- sample(21, 1) - 1
+                chop <- sample(17, 1) - 1
                 if(chop > 0){
                     views <- head(views, -chop)
                     sales <- head(sales, -chop)
+                }
+                chop <- sample(17, 1) - 1
+                if(chop > 0){
+                    views <- tail(views, -chop)
+                    sales <- tail(sales, -chop)
                 }
 
                 valid <- tail(sales, 14) 
@@ -27,7 +31,7 @@ nets <- mclapply(seq(24), mc.cores = 8,
                 net <- mlp_train(views, sales, pre_views, pre_sales)
                 net$shop_id <- shop_id
                 #plot(net$errors, type = 'l', ylim = c(0, 100) , xlim=c(0, 1000))
-                #net$train_error
+                message('Train error: ', net$train_error)
 
                 pred  <- mlp_predict(views, sales, pre_views, pre_sales, net, 14)
                 net$score <- stats_err(pred, valid)
@@ -41,8 +45,9 @@ nets <- mclapply(seq(24), mc.cores = 8,
 predictions <- ldply(nets, function(net){
                     views <- unlist(shop_views[net$shop_id, -1])
                     sales <- unlist(shop_sales[net$shop_id, -1])
-                    pred  <- mlp_predict(views, sales, pre_views, pre_sales, net, 14)
                     valid <- tail(sales, 14)
+
+                    pred  <- mlp_predict(views, sales, pre_views, pre_sales, net, 14)
                     error <- stats_err(pred, valid)$err
 
                     #dev.hold()
@@ -55,21 +60,35 @@ predictions <- ldply(nets, function(net){
 scores <- predictions$error
 dim(scores) <- c(length(scores), 1)
 
+pred_w <- laply(nets, function(net){ 
+                if(abs(net$score$cor) < 0.3) return(0)
+                return(net$score$cor)
+          })
 avg_pred <- laply(predictions$data, identity) %>%
             apply(2, function(pred){
-                mean(pred)
+                sum(pred * pred_w) / sum(pred_w)
+                #mean(pred)
             })
 
 print('Avg error')
-report_error(avg_pred, valid)
-plot_series(rbind(avg_pred, valid))
+sales <- unlist(shop_sales[shop_id, -1])
+valid <- tail(sales, 14)
+avg_err <- report_error(avg_pred, valid)$err
 
+#all_avg <- all_scores <- c()
+
+all_avg <- c(all_avg, avg_err)
 all_scores <- cbind(all_scores, scores)
-mn <- apply(all_scores, 2, min) %>% melt()
+
+mn <- all_avg %>% melt()
 mn$Var2 <- seq(nrow(mn))
 su <- summarySE(melt(all_scores), measurevar='value', groupvar=c('Var2'))
-ggplot(su, aes(x = Var2, y = value)) +
-    geom_errorbar(aes(ymin = value - sd, ymax = value + sd)) + 
-    geom_line() + 
-    geom_point(data = mn)
 
+
+p1 <- plot_series(rbind(avg_pred, valid)) 
+p2 <- ggplot(su, aes(x = Var2, y = value)) +
+        geom_errorbar(aes(ymin = value - se, ymax = value + se)) + 
+        geom_line() + 
+        geom_point(data = mn)
+
+multiplot(p1,p2)
