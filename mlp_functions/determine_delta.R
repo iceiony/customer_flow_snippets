@@ -1,4 +1,4 @@
-determine_delta <- function(targ,out,w){
+determine_delta <- function(targ, out, w){
    delta <- as.list(rep(0,length(w)))
    dif <- targ - last(out)
 
@@ -9,7 +9,7 @@ determine_delta <- function(targ,out,w){
    
        if(layer > 1){
            dif  <- t(tcrossprod(w[[layer]], dif)) * out[[layer]] * (1 - out[[layer]])
-           dif <- dif[, -1]
+           dif <- dif[, -1, drop = F]
        }
    }
    delta
