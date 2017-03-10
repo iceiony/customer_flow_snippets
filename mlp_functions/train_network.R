@@ -1,27 +1,27 @@
-train_network <- function(train, view, hidden, rate, duration){
+train_network <- function(views, sales, pre_views, pre_sales, hidden, rate, duration){
     tic()
     errors <- numeric(duration)
 
-    w <- init_weights(c(period + vperiod, hidden, 1))
-    L <- length(train)
+    w <- init_weights(c(pre_views, hidden, 1))
+    L <- length(sales)
 
     for(epoch in 1:length(errors)){
         
         repeat{
             pred_len <- 14
-            idx_start <- sample(L - period - vperiod, 1) + period + vperiod
+            idx_start <- sample(L - pre_views, 1) + pre_views
             idx_end   <- min(L, idx_start + pred_len - 1)
 
-            TARG <- train[idx_start:idx_end] 
+            TARG <- sales[idx_start:idx_end] 
             dim(TARG) <- c(length(TARG), 1)
 
             IN <- c()
-            tr <- train[seq(idx_start - period, idx_start - 1)]
+            sr <- sales[seq(idx_start - pre_sales, idx_start - 1)]
             for(i in seq(idx_start, idx_end)){
-                vr <- view[seq(i - period - vperiod, i - period - 1)]
-                IN <- rbind(IN, c(tr,vr))
-                next_day <- run_network(c(tr,vr), w) %>% last()
-                tr <- c(tr[-1], next_day)
+                vr <- views[seq(i - pre_views, i - pre_sales - 1)]
+                IN <- rbind(IN, c(vr, sr))
+                next_day <- run_network(c(vr, sr), w) %>% last()
+                sr <- c(sr[-1], next_day)
             }
 
             IN[is.na(IN)] <- 0
@@ -40,6 +40,8 @@ train_network <- function(train, view, hidden, rate, duration){
         }
 
         errors[epoch] <- sse_cost(last(net_out), TARG)
+        #errors[epoch]
+        #plot_series(cbind(last(net_out),TARG) %>% t())
 
         delta <- determine_delta(TARG, net_out, w)
         w <- update_weights(w, delta, rate)

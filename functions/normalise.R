@@ -1,14 +1,14 @@
 normalise <- normalize <- function(signal){
-    mn <- min(signal, na.rm = T)
-    mx <- max(signal, na.rm = T)
+    mean_ <- mean(signal, na.rm = T)
+    norm_ <- max(signal, na.rm = T) - min(signal, na.rm = T)
 
-    out <- (signal - mn)/(mx - mn)
-    attr(out, 'min')  <- mn
-    attr(out, 'norm') <- mx - mn
+    out <- (signal - mean_) / norm_ 
+    attr(out, 'mean') <- mean_
+    attr(out, 'norm') <- norm_
 
     out
 }
 
-denormalise <- denormalize <- function(signal, attrib = attributes(s)[c('min','norm')]){
-    signal * attrib$norm + attrib$min
+denormalise <- denormalize <- function(signal, attrib = attributes(s)[c('mean','norm')]){
+    signal * attrib$norm + attrib$mean
 }

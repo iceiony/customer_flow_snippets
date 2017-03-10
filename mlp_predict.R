@@ -1,21 +1,8 @@
 source('./init.R')
 source('./mlp_functions/init.R')
-library('smoother')
 
-shop_id <- 3
-period  <- 20
-vperiod <- 20
-
-trend <- function(s, gaus){
-    trend <- unlist(s) %>% smth.gaussian(gaus, tails = T)
-    trend# * 0.9
-}
-
-prepare <- function(x, chop_start = Inf, chop_end = 0){
-    x <- unlist(x) %>% tail(-1) %>% tail(chop_start + 1)
-
-    if(chop_end > 0) x <- tail(x, -chop_end)
-
+prepare <- function(x, max_len = Inf){
+    x <- unlist(x) %>% tail(-1)
     not_na <- first(which(!is.na(x)))
     x <- x[-seq(not_na - 1)]
     #x[is.na(x)] <- 0
@@ -24,60 +11,47 @@ prepare <- function(x, chop_start = Inf, chop_end = 0){
     #nas[nas >= length(x)]  <- length(x) - 1
     #x[nas + 1] <- NA
     #x[nas - 1] <- NA
-    (normalise(x) * 10)
+    x <- tail(x, max_len )
+    (normalise(x) * 20) 
 }
 
-shop_sales <- read.table('./data/daily_shop_sales.csv', sep = ',', header = T)
-shop_views <- read.table('./data/daily_shop_view.csv', sep = ',', header = T)
+mlp_train <- function(views, sales, pre_views, pre_sales){
+    v <- prepare(views)
+    s <- prepare(sales, length(v))
 
-message('Preparing training data...')
-chop <- sample(21, 1) - 1
-v <- shop_views[shop_id, -1] %>% prepare(chop_end = -chop)
-s <- shop_sales[shop_id, -1] %>% prepare(length(v), chop_end = -chop)
+    hidd <- c(300, 60)
+    rate <- c(5e-1, 1e-3, 1e-3) 
+    len  <- round((length(s) / 100) * 500)  
+    net  <- train_network(v, s, pre_views, pre_sales, hidd, rate, len)
+    net$train_error <- mean(tail(net$errors), 100) 
+    #plot(net$errors, type = 'l', ylim = c(0, 100) , xlim=c(0, 1000))
+    #net$train_error
 
-q <- mean(v, na.rm = T)#trend(v, 0.25)
-r <- mean(s, na.rm = T)#trend(s, 0.25)
-#plot_series(rbind(s,r))
-v <- (v - q)
-s <- (s - r)
-#plot_series(s)
+    return(net)
+}
 
-train <- head(s, -14)
-view  <- head(v, -14)
+mlp_predict <- function(views, sales, pre_views, pre_sales, net, duration){
+    v <- prepare(views)
+    s <- prepare(sales, length(v))
 
-message('Training network...')
-hidden <- c(300, 90)
-net <- train_network(train, view, hidden, c(5e-1, 1e-3, 1e-2), round((length(s) / 100) * 300) ) 
-#plot(net$errors, type = 'l', ylim = c(0, 100) , xlim=c(0, 1000))
-cat('Train error:'  , mean(tail(net$errors), 50), '\n')
+    pred <- predict_future(tail(v, pre_views), tail(s, pre_sales), net, duration)
+    pred <- (pred / 20) %>% denormalise(attributes(s))
+    
+    return(pred)
+}
 
-#dat <- cbind(OUT,out) %>% t()
-#rownames(dat) <- c('actual','learned')
-#plot_series(dat)
+predict_future <- function(views, sales, net, duration = 14){
+    views[is.na(views)] <- 0
+    sales[is.na(sales)] <- 0
 
-message('Predict future days')
-predict_future <- function(IN, VIEW, net, duration = 14){
-    VIEW[is.na(VIEW)] <- 0
-    IN[is.na(IN)]     <- 0
     pred <- c()
-    for(i in seq(duration)){
-        v <- VIEW[seq(vperiod) + i - 1]
-        next_day <- run_network(c(IN, v) , net$w) %>% last()
+    view_idx  <- seq(length(views) - length(sales)) - 1
+    all_views <- views
+    for(sale_idx in seq(duration)){
+        views    <- all_views[view_idx + sale_idx]
+        next_day <- run_network(c(views, sales) , net$w) %>% last()
         pred     <- c(pred, next_day)
-        IN       <- c(IN[-1], next_day)
+        sales    <- c(sales[-1], next_day)
     }
     tail(pred, duration)
 }
-
-inn  <- head(s, -14) %>% tail(period)
-view <- head(v, -14) %>% tail(period + vperiod)
-pred <- predict_future(inn, view, net, 14)
-pred <- pred + tail(r, 14)
-valid <- tail(s + r, 14)
-#plot_series(rbind(pred,valid))
-
-attributes(valid) <- attributes(pred) <- attributes(s)[c('min','norm')]
-pred  <- (pred  / 10) %>% denormalise()
-valid <- (valid / 10) %>% denormalise()
-
-report_error(pred,valid)

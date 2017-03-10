@@ -1,36 +1,53 @@
 library('Rmisc')
 library('grid')
+source('./mlp_predict.R')
+
+shop_sales <- read.table('./data/daily_shop_sales.csv', sep = ',', header = T)
+shop_views <- read.table('./data/daily_shop_view.csv' , sep = ',', header = T)
+pre_sales <- 20
+pre_views <- pre_sales + 20
 
 nets <- mclapply(seq(24), mc.cores = 8,
              function(idx){
-                error <- source('mlp_predict.R', local = T)
-                c(score = error$value$err, I(net))
+                shop_id <- 3
+                
+                views <- unlist(shop_views[shop_id, -1])
+                sales <- unlist(shop_sales[shop_id, -1])
+
+                chop <- sample(21, 1) - 1
+                if(chop > 0){
+                    views <- head(views, -chop)
+                    sales <- head(sales, -chop)
+                }
+
+                net <- mlp_train(views, sales, pre_views, pre_sales)
+                net$shop_id <- shop_id
+
+                plot(net$errors, type = 'l', ylim = c(0, 100) , xlim=c(0, 1000))
+                net$train_error
+
+                valid <- tail(sales, 14) 
+                views <- head(views, -14)
+                sales <- head(sales, -14)
+
+                pred  <- mlp_predict(views, sales, pre_views, pre_sales, net, 14)
+
+                plot_series(rbind(pred, valid))
+                report_error(pred,valid)
+
+                return(net)
              }) 
 
+scores <- ldply(nets, function(net){
+                views <- shop_views[net$shop_id, -1]
+                sales <- shop_sales[net$shop_id, -1]
+                pred  <- mlp_predict(views, sales, pre_views, pre_sales, net)
 
-v <- shop_views[shop_id, -1] %>% prepare()
-s <- shop_sales[shop_id, -1] %>% prepare(length(v))
-q <- mean(v, na.rm = T)#trend(v, 0.25)
-r <- mean(s, na.rm = T)#trend(s, 0.25)
-v <- (v - q)
-s <- (s - r)
-valid <- tail(s + r, 14)
-attributes(valid) <-  attributes(s)[c('min','norm')]
-valid <- (valid / 10) %>% denormalise()
+                pred  <- tail(pred, 14)
+                valid <- tail(views, 14)
 
-preds <- ldply(nets, function(net){
-                inn  <- head(s, -14) %>% tail(period)
-                view <- head(v, -14) %>% tail(period + vperiod)
-                pred <- predict_future(inn, view, net, 14)
-                pred <- pred + tail(r, 14)
-                attributes(pred) <- attributes(s)[c('min','norm')]
-                pred  <- (pred  / 10) %>% denormalise()
-                pred
-           })
-
-scores <- apply(preds, 1, function(pred){
-                 stats_err(unlist(pred), valid)$err
-           })
+                stats_err(unlist(pred), valid)$err
+          })
 dim(scores) <- c(length(scores), 1)
 
 avg_pred <- apply(preds, 2, function(pred){
