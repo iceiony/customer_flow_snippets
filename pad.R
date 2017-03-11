@@ -3,8 +3,14 @@ library('grid')
 source('./mlp_predict.R')
 
 shop_sales <- read.table('./data/daily_shop_sales.csv', sep = ',', header = T)
-pre_sales <- 16
-shop_id <- 266 #sample(nrow(shop_sales), 1)
+shop_id <- 4 #sample(nrow(shop_sales), 1)
+params <- list(
+               pre_sales = 16,
+               hidd = c(150, 50),
+               rate = c(5e-2, 1e-2, 1e-2),
+               train_len = 25,
+               trended = F
+          )
 
 nets <- mclapply(seq(63), mc.cores = 7,
              function(idx){
@@ -19,12 +25,12 @@ nets <- mclapply(seq(63), mc.cores = 7,
                 valid <- tail(sales, 14) 
                 sales <- head(sales, -14)
 
-                net <- mlp_train(sales, pre_sales)
+                net <- mlp_train(sales, params)
                 net$shop_id <- shop_id
                 #plot(net$errors, type = 'l', ylim = c(0, 100) , xlim=c(0, 1000))
                 message('Train error: ', net$train_error)
 
-                pred  <- mlp_predict(sales, pre_sales, net, 14)
+                pred  <- mlp_predict(sales, params, net, 14)
                 net$score <- stats_err(pred, valid)
                 #plot_series(rbind(pred, valid))
                 #report_error(pred,valid)
@@ -37,7 +43,7 @@ predictions <- ldply(nets, function(net){
                     sales <- unlist(shop_sales[net$shop_id, -1])
                     valid <- tail(sales, 14)
 
-                    pred  <- mlp_predict(sales, pre_sales, net, 14)
+                    pred  <- mlp_predict(sales, params, net, 14)
                     error <- stats_err(pred, valid)$err
 
                     #dev.hold()
@@ -51,7 +57,7 @@ scores <- predictions$error
 dim(scores) <- c(length(scores), 1)
 
 pred_w <- laply(nets, function(net){ 
-                if(abs(net$score$cor) < 0.3) return(0)
+                if(net$score$cor < 0.3) return(0)
                 if(abs(net$score$err) > 0.12) return(0)
                 return(net$score$cor)
           })

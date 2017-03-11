@@ -1,7 +1,7 @@
 source('./init.R')
 source('./mlp_functions/init.R')
 
-prepare <- function(x, max_len = Inf){
+prepare <- function(x, trended){
     x <- unlist(x) %>% tail(-1)
     not_na <- first(which(!is.na(x)))
     x <- x[-seq(not_na - 1)]
@@ -11,17 +11,14 @@ prepare <- function(x, max_len = Inf){
     #nas[nas >= length(x)]  <- length(x) - 1
     #x[nas + 1] <- NA
     #x[nas - 1] <- NA
-    x <- tail(x, max_len )
-    (normalise(x) * 10) 
+    (normalise(x, trended) * 10) 
 }
 
-mlp_train <- function(sales, pre_sales){
-    s <- prepare(sales)
+mlp_train <- function(sales, params){
+    list2env(params, environment())
+    s <- prepare(sales, trended)
 
-    hidd <- c(150, 50)
-    rate <- c(5e-2, 1e-2, 1e-2) 
-    len  <- round((length(s) / 100) * 45)  
-    net  <- train_network(s, pre_sales, hidd, rate, len)
+    net  <- train_network(s, pre_sales, hidd, rate, train_len)
     net$train_error <- mean(tail(net$errors), 50) 
     #plot(net$errors, type = 'l', ylim = c(0, 100) , xlim=c(0, 1000))
     #net$train_error
@@ -29,11 +26,12 @@ mlp_train <- function(sales, pre_sales){
     return(net)
 }
 
-mlp_predict <- function(sales, pre_sales, net, duration){
-    s <- prepare(sales)
+mlp_predict <- function(sales, params, net, duration){
+    list2env(params, environment())
+    s <- prepare(sales, trended)
 
     pred <- tail(s, pre_sales) %>% predict_future(net, duration)
-    pred <- (pred / 10) %>% denormalise(attributes(s))
+    pred <- (pred / 10) %>% denormalise(attributes(s), trended)
     
     return(pred)
 }
