@@ -9,6 +9,6 @@ normalise <- normalize <- function(signal){
     out
 }
 
-denormalise <- denormalize <- function(signal, attrib = attributes(s)[c('mean','norm')]){
+denormalise <- denormalize <- function(signal, attrib = attributes(signal)){
     signal * attrib$norm + attrib$mean
 }
