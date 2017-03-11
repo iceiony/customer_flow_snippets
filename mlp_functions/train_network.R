@@ -1,28 +1,26 @@
-train_network <- function(views, sales, pre_views, pre_sales, hidden, rate, duration){
+train_network <- function(sales, pre_sales, hidden, rate, duration){
     tic()
     errors <- numeric(duration)
 
-    w <- init_weights(c(pre_views, hidden, 1))
+    w <- init_weights(c(pre_sales, hidden, 1))
     L <- length(sales)
 
     for(epoch in 1:length(errors)){
         
         repeat{
             pred_len <- 14
-            idx_start <- sample(L - pre_views, 1) + pre_views
+            idx_start <- sample(L - pre_sales, 1) + pre_sales
             idx_end   <- min(L, idx_start + pred_len - 1)
 
             TARG <- sales[idx_start:idx_end] 
             dim(TARG) <- c(length(TARG), 1)
 
             IN <- c()
-            sr <- sales[seq(idx_start - pre_sales, idx_start - 1)]
+            net_in <- sales[seq(idx_start - pre_sales, idx_start - 1)]
             for(i in seq(idx_start, idx_end)){
-                vr <- views[seq(i - pre_views, i - pre_sales - 1)]
-                net_in <- c(vr, sr)# %>% jitter( factor = 1)
                 IN <- rbind(IN, net_in)
                 next_day <- run_network(net_in, w) %>% last()
-                sr <- c(sr[-1], next_day)
+                net_in <- c(net_in[-1], next_day)
             }
 
             IN[is.na(IN)] <- 0

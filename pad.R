@@ -3,37 +3,28 @@ library('grid')
 source('./mlp_predict.R')
 
 shop_sales <- read.table('./data/daily_shop_sales.csv', sep = ',', header = T)
-shop_views <- read.table('./data/daily_shop_view.csv' , sep = ',', header = T)
-pre_sales <- 14
-pre_views <- pre_sales + 1
-shop_id <- 4
+pre_sales <- 16
+shop_id <- 1#266 #sample(nrow(shop_sales), 1)
 
 nets <- mclapply(seq(63), mc.cores = 7,
              function(idx){
-                views <- unlist(shop_views[shop_id, -1]) 
                 sales <- unlist(shop_sales[shop_id, -1])
 
                 chop <- sample(17, 1) - 1
-                if(chop > 0){
-                    views <- head(views, -chop)
-                    sales <- head(sales, -chop)
-                }
+                if(chop > 0) sales <- head(sales, -chop)
+                
                 chop <- sample(17, 1) - 1
-                if(chop > 0){
-                    views <- tail(views, -chop)
-                    sales <- tail(sales, -chop)
-                }
-
+                if(chop > 0) sales <- tail(sales, -chop)
+                
                 valid <- tail(sales, 14) 
-                views <- head(views, -14)
                 sales <- head(sales, -14)
 
-                net <- mlp_train(views, sales, pre_views, pre_sales)
+                net <- mlp_train(sales, pre_sales)
                 net$shop_id <- shop_id
                 #plot(net$errors, type = 'l', ylim = c(0, 100) , xlim=c(0, 1000))
                 message('Train error: ', net$train_error)
 
-                pred  <- mlp_predict(views, sales, pre_views, pre_sales, net, 14)
+                pred  <- mlp_predict(sales, pre_sales, net, 14)
                 net$score <- stats_err(pred, valid)
                 #plot_series(rbind(pred, valid))
                 #report_error(pred,valid)
@@ -43,11 +34,10 @@ nets <- mclapply(seq(63), mc.cores = 7,
 
 
 predictions <- ldply(nets, function(net){
-                    views <- unlist(shop_views[net$shop_id, -1])
                     sales <- unlist(shop_sales[net$shop_id, -1])
                     valid <- tail(sales, 14)
 
-                    pred  <- mlp_predict(views, sales, pre_views, pre_sales, net, 14)
+                    pred  <- mlp_predict(sales, pre_sales, net, 14)
                     error <- stats_err(pred, valid)$err
 
                     #dev.hold()

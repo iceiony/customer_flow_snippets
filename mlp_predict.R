@@ -15,14 +15,13 @@ prepare <- function(x, max_len = Inf){
     (normalise(x) * 10) 
 }
 
-mlp_train <- function(views, sales, pre_views, pre_sales){
-    v <- prepare(views)
-    s <- prepare(sales, length(v))
+mlp_train <- function(sales, pre_sales){
+    s <- prepare(sales)
 
     hidd <- c(150, 50)
     rate <- c(5e-2, 1e-2, 1e-2) 
     len  <- round((length(s) / 100) * 15)  
-    net  <- train_network(v, s, pre_views, pre_sales, hidd, rate, len)
+    net  <- train_network(s, pre_sales, hidd, rate, len)
     net$train_error <- mean(tail(net$errors), 50) 
     #plot(net$errors, type = 'l', ylim = c(0, 100) , xlim=c(0, 1000))
     #net$train_error
@@ -30,28 +29,24 @@ mlp_train <- function(views, sales, pre_views, pre_sales){
     return(net)
 }
 
-mlp_predict <- function(views, sales, pre_views, pre_sales, net, duration){
-    v <- prepare(views)
-    s <- prepare(sales, length(v))
+mlp_predict <- function(sales, pre_sales, net, duration){
+    s <- prepare(sales)
 
-    pred <- predict_future(tail(v, pre_views), tail(s, pre_sales), net, duration)
+    pred <- tail(s, pre_sales) %>% predict_future(net, duration)
     pred <- (pred / 10) %>% denormalise(attributes(s))
     
     return(pred)
 }
 
-predict_future <- function(views, sales, net, duration = 14){
-    views[is.na(views)] <- 0
+predict_future <- function(sales, net, duration = 14){
     sales[is.na(sales)] <- 0
 
     pred <- c()
-    view_idx  <- seq(length(views) - length(sales)) - 1
-    all_views <- views
     for(sale_idx in seq(duration)){
-        views    <- all_views[view_idx + sale_idx]
-        next_day <- run_network(c(views, sales) , net$w) %>% last()
+        next_day <- run_network(sales , net$w) %>% last()
         pred     <- c(pred, next_day)
         sales    <- c(sales[-1], next_day)
     }
+
     tail(pred, duration)
 }
