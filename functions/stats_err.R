@@ -3,6 +3,6 @@ stats_err <- function(out, targ, len = 14){
     targ <- tail(targ, len)
 
     er <- error_cost(out, targ)
-    co <- cor(out, targ)
+    co <- cor(out, targ, use = 'pairwise.complete.obs')
 
     list(err = er, cor = co)}
