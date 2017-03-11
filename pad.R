@@ -4,7 +4,7 @@ source('./mlp_predict.R')
 
 shop_sales <- read.table('./data/daily_shop_sales.csv', sep = ',', header = T)
 pre_sales <- 16
-shop_id <- 1#266 #sample(nrow(shop_sales), 1)
+shop_id <- 266 #sample(nrow(shop_sales), 1)
 
 nets <- mclapply(seq(63), mc.cores = 7,
              function(idx){
@@ -52,6 +52,7 @@ dim(scores) <- c(length(scores), 1)
 
 pred_w <- laply(nets, function(net){ 
                 if(abs(net$score$cor) < 0.3) return(0)
+                if(abs(net$score$err) > 0.12) return(0)
                 return(net$score$cor)
           })
 avg_pred <- laply(predictions$data, identity) %>%

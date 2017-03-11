@@ -20,7 +20,7 @@ mlp_train <- function(sales, pre_sales){
 
     hidd <- c(150, 50)
     rate <- c(5e-2, 1e-2, 1e-2) 
-    len  <- round((length(s) / 100) * 15)  
+    len  <- round((length(s) / 100) * 45)  
     net  <- train_network(s, pre_sales, hidd, rate, len)
     net$train_error <- mean(tail(net$errors), 50) 
     #plot(net$errors, type = 'l', ylim = c(0, 100) , xlim=c(0, 1000))
