@@ -4,7 +4,7 @@ normalise <- normalize <- function(signal, trended = F){
     if(trended){
         sig <- signal
         sig[is.na(sig)] <- 0
-        trnd_ <- trend(sig, 0.03)
+        trnd_ <- trend(sig, 0.04)
     }
 
     signal <- signal - trnd_ 

@@ -1,5 +1,4 @@
 train_network <- function(sales, pre_sales, hidden, rate, duration){
-    tic()
     errors <- numeric(duration)
 
     w <- init_weights(c(pre_sales, hidden, 1))
@@ -48,7 +47,6 @@ train_network <- function(sales, pre_sales, hidden, rate, duration){
         rate <- rate * 0.999
     }
 
-    toc()
     errors[is.nan(errors)] <- NA
     errors[is.infinite(errors)] <- NA
     list(w=w,errors=errors[1:epoch-1])
